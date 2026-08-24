@@ -1,0 +1,7 @@
+{$ZOTERO_READER_HOST} {
+    encode zstd gzip
+    log {
+        output discard
+    }
+    reverse_proxy bridge:8000
+}
