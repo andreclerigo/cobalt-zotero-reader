@@ -1,0 +1,29 @@
+name: Bridge CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/zotero-conversion-bridge
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install the locked Python project manager
+        run: python3 -m pip install --user uv==0.8.11
+      - run: python3 -m uv sync --frozen --group dev
+      - run: python3 -m uv run ruff check .
+      - run: python3 -m uv run mypy src
+      - run: python3 -m uv run pytest
+      - run: docker compose config --quiet
+        env:
+          ZOTERO_BRIDGE_ENV_FILE: .env.example
+          ZOTERO_READER_HOST: papers.invalid
+          ZOTERO_READER_CACHE_PATH: /tmp/cobalt-zotero-conversion-cache
+          DOCLING_SERVE_API_KEY: compose-validation-only
