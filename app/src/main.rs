@@ -100,6 +100,7 @@ struct ReadingList {
     fresh_snapshot: bool,
     filtered: Vec<usize>,
     keyboard: Keyboard,
+    collection_page: usize,
     list_page: usize,
     library_page: usize,
     detail_pages: Vec<Vec<String>>,
@@ -245,6 +246,7 @@ impl ReadingList {
     fn fetch_collections(&mut self, context: &mut Context) {
         self.trouble = None;
         self.view = View::Collections;
+        self.collection_page = 0;
         self.fetch_zotero(
             context,
             "/collections?format=json&limit=100&sort=title&direction=asc",
@@ -819,7 +821,7 @@ impl ReadingList {
             .build()
     }
 
-    fn collections_screen(&self) -> Screen {
+    fn collections_screen(&self, context: &Context) -> Screen {
         let mut screen =
             ScreenBuilder::new("zotero-reader-collections").top_bar("Choose collection");
         if let Some(trouble) = &self.trouble {
@@ -837,20 +839,41 @@ impl ReadingList {
                 .bottom_action_marked(REFRESH, "Try again", Glyph::Download)
                 .build();
         }
+        let rows: Vec<(String, String)> = self
+            .collections
+            .iter()
+            .map(|collection| {
+                let summary = if self
+                    .selected
+                    .as_ref()
+                    .is_some_and(|selected| selected.key == collection.key)
+                {
+                    format!("{} · Current", collection.key)
+                } else {
+                    collection.key.clone()
+                };
+                (collection.name.clone(), summary)
+            })
+            .collect();
+        let borrowed: Vec<(&str, &str)> = rows
+            .iter()
+            .map(|(title, summary)| (title.as_str(), summary.as_str()))
+            .collect();
+        let pages = context.paginate_rows(&borrowed, true);
+        let page = self.collection_page.min(pages.len().saturating_sub(1));
+        let shown = pages.get(page).map(Vec::as_slice).unwrap_or_default();
         screen
-            .rows(
-                self.collections
-                    .iter()
-                    .enumerate()
-                    .map(|(index, collection)| {
-                        (
-                            format!("{COLLECTION}{index}"),
-                            collection.name.clone(),
-                            collection.key.clone(),
-                            RowLead::Icon(Glyph::Bookmark),
-                        )
-                    }),
-            )
+            .rows(shown.iter().filter_map(|index| {
+                let collection = self.collections.get(*index)?;
+                Some((
+                    format!("{COLLECTION}{index}"),
+                    collection.name.clone(),
+                    rows.get(*index)?.1.clone(),
+                    RowLead::Icon(Glyph::Bookmark),
+                ))
+            }))
+            .page_turns(LIST_BACK, LIST_NEXT)
+            .page_position(page_number(page), page_total(pages.len()))
             .build()
     }
 
@@ -894,6 +917,7 @@ impl ReadingList {
         if self.filtered.is_empty() {
             return screen
                 .empty_state("No cached papers match this list or search.")
+                .top_bar_glyph(CHANGE_COLLECTION, "Collections", Glyph::Folder)
                 .top_bar_glyph(LIBRARY, "Offline", Glyph::Bookmark)
                 .action_bar_marked(actions)
                 .build();
@@ -922,6 +946,7 @@ impl ReadingList {
             ))
         }));
         screen
+            .top_bar_glyph(CHANGE_COLLECTION, "Collections", Glyph::Folder)
             .top_bar_glyph(LIBRARY, "Offline", Glyph::Bookmark)
             .action_bar_marked(actions)
             .page_turns(LIST_BACK, LIST_NEXT)
@@ -1101,7 +1126,7 @@ impl ReadingList {
     fn show(&mut self, context: &mut Context) {
         let screen = match self.view {
             View::Setup => self.setup_screen(),
-            View::Collections => self.collections_screen(),
+            View::Collections => self.collections_screen(context),
             View::Feed => self.feed_screen(context),
             View::Search => self.search_screen(),
             View::Detail => self.detail_screen(),
@@ -1125,6 +1150,7 @@ impl ReadingList {
 
     fn turn(&mut self, context: &mut Context, forward: bool) {
         let page = match self.view {
+            View::Collections => &mut self.collection_page,
             View::Feed => &mut self.list_page,
             View::Library => &mut self.library_page,
             View::Detail => &mut self.detail_page,
@@ -1994,6 +2020,64 @@ mod tests {
         assert!(actions
             .iter()
             .any(|action| action.action == action_id(super::SEARCH)));
+    }
+
+    #[test]
+    fn feed_exposes_collection_switching_and_offline_library() {
+        let mut app = super::ReadingList {
+            view: super::View::Feed,
+            selected: Some(Collection {
+                key: "COLL1234".to_owned(),
+                name: "Reading queue".to_owned(),
+            }),
+            ..super::ReadingList::default()
+        };
+        let mut context = Context::default();
+        app.show(&mut context);
+        let screen = context
+            .take_commands()
+            .into_iter()
+            .find_map(|command| match command {
+                Command::SetScreen(screen) => Some(screen),
+                _ => None,
+            })
+            .expect("feed screen");
+        let actions = &screen.top_bar.expect("feed top bar").actions;
+
+        assert!(actions
+            .iter()
+            .any(|action| action.action == action_id(super::CHANGE_COLLECTION)));
+        assert!(actions
+            .iter()
+            .any(|action| action.action == action_id(super::LIBRARY)));
+    }
+
+    #[test]
+    fn collection_picker_pages_lists_that_do_not_fit_the_panel() {
+        let mut app = super::ReadingList {
+            view: super::View::Collections,
+            collections: (0..30)
+                .map(|index| Collection {
+                    key: format!("COLL{index:04}"),
+                    name: format!("Collection {index}"),
+                })
+                .collect(),
+            ..super::ReadingList::default()
+        };
+        let mut context = Context::default();
+        app.show(&mut context);
+        let screen = context
+            .take_commands()
+            .into_iter()
+            .find_map(|command| match command {
+                Command::SetScreen(screen) => Some(screen),
+                _ => None,
+            })
+            .expect("collection picker");
+
+        assert!(screen
+            .page_turns
+            .is_some_and(|turns| turns.position.is_some_and(|(_, total)| total > 1)));
     }
 
     #[test]
