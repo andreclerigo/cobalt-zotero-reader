@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Troubleshoot Zotero Reader on Cobalt and its optional conversion bridge.">
+  <title>Troubleshoot · Zotero Reader</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <nav aria-label="Documentation"><a href="index.html">Overview</a><a href="setup.html">Set up</a><a href="self-hosting.html">Self-host</a><a href="api.html">Bridge API</a><a aria-current="page" href="troubleshooting.html">Troubleshoot</a><a href="https://github.com/andreclerigo/cobalt-zotero-reader">Source</a></nav>
+  <h1>Troubleshooting</h1>
+  <p class="lede">Identify whether the failure is on the Kobo, at Zotero, or in the optional conversion service before changing configuration.</p>
+</header>
+<main>
+  <h2>“Permission needed”</h2>
+  <p>The runtime does not have the named secret. Re-run the interactive command for <code>zotero</code>, or for <code>zotero-bridge</code> when using conversion mode. A key installed under a different name is intentionally not accepted.</p>
+
+  <h2>No collections appear</h2>
+  <p>Confirm the number entered in the app is the numeric Zotero user ID shown beside the API key. Verify the dedicated key has read access to the personal library. The app reads user collections, not group libraries or saved searches.</p>
+
+  <h2>I cannot switch collections</h2>
+  <p>Open the folder-shaped <strong>Collections</strong> action in the feed header. It refreshes the collection list from Zotero. If Zotero is offline, the current collection and its cached snapshot remain available; collection discovery itself needs a connection.</p>
+
+  <h2>Metadata appears but no full text opens</h2>
+  <p>The item must have a PDF stored in Zotero. A linked local file, DOI, publisher page, or URL attachment is not downloaded. Sync the stored attachment to Zotero, refresh the reader, then open the paper again. Direct mode also depends on Zotero having indexed the PDF text.</p>
+
+  <h2>“The conversion service could not be reached”</h2>
+  <ol>
+    <li>Check that the service survives reboots: <code>docker compose ps</code>.</li>
+    <li>From another machine, request <code>https://your-host/v1/health</code>. The site root returning 404 is normal; the API starts at <code>/v1/</code>.</li>
+    <li>Confirm the Cobalt package was built with exactly that bare HTTPS origin.</li>
+    <li>Confirm DNS and TLS work from the Kobo's current Wi-Fi, not only from the host itself.</li>
+  </ol>
+
+  <h2>Conversion stays queued or running</h2>
+  <p>Inspect <code>docker compose ps</code> and the bridge and Docling logs. The first conversion includes model loading and can take several minutes. Do not expose Docling directly or raise time and memory limits independently; the bridge and Docling limits must remain synchronized.</p>
+
+  <h2>A reading-position save is pending</h2>
+  <p>Use the visible <strong>Retry position</strong> action before opening another paper. The app blocks the next paper so a failed save cannot silently attach one paper's position or annotations to another. If storage is full, remove an offline document and retry.</p>
+
+  <h2>Development checks</h2>
+  <pre><code>cargo test -p kobo-zotero-reader
+cargo test -p kobo-policy -p kobo-net
+
+cd services/zotero-conversion-bridge
+python3 -m uv sync --frozen --group dev
+python3 -m uv run ruff check .
+python3 -m uv run mypy src
+python3 -m uv run pytest
+docker compose config</code></pre>
+</main>
+<footer>Never paste API keys, bearer tokens, full environment files, or private paper contents into an issue report.</footer>
+</body>
+</html>

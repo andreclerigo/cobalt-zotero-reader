@@ -18,6 +18,11 @@ The image is an owner-provided Kobo device capture from development. It is
 evidence of a reading view only, not a simulator, compatibility, or release
 claim.
 
+Start with the [reader setup guide](docs/setup.html). If you want structured
+PDF conversion, continue with the [self-hosting guide](docs/self-hosting.html).
+The same guides are published as a
+[GitHub Pages site](https://andreclerigo.github.io/cobalt-zotero-reader/).
+
 ## Repository layout
 
 - app/ — Rust application source, model parser, and synthetic Zotero
@@ -25,6 +30,7 @@ claim.
   examples/zotero-reader/.
 - services/zotero-conversion-bridge/ — optional FastAPI, Caddy, and
   Docling deployment.
+- docs/index.html — user setup, self-hosting, API, and troubleshooting guides.
 - docs/INTEGRATION.md — how this source connects to the Cobalt platform.
 - docs/DEVELOPMENT.md — local checks and attended-device workflow.
 - docs/ARCHITECTURE.md — trust boundaries and current non-goals.
@@ -57,6 +63,12 @@ uv run ruff check .
 uv run mypy src
 uv run pytest
 docker compose config
+~~~
+
+Validate the static documentation with:
+
+~~~
+python3 scripts/validate_docs.py
 ~~~
 
 To run the Kobo app, integrate app/ into Cobalt and follow

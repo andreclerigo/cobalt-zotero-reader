@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Zotero Reader for Cobalt: browse Zotero collections and read papers on a Kobo.">
+  <title>Zotero Reader for Cobalt</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <nav aria-label="Documentation"><a aria-current="page" href="index.html">Overview</a><a href="setup.html">Set up</a><a href="self-hosting.html">Self-host</a><a href="api.html">Bridge API</a><a href="troubleshooting.html">Troubleshoot</a><a href="https://github.com/andreclerigo/cobalt-zotero-reader">Source</a></nav>
+  <h1>Zotero Reader</h1>
+  <p class="lede">Your Zotero reading lists on a Kobo, with a serverless core and an optional rich-PDF conversion service.</p>
+</header>
+<main>
+  <div class="note"><strong>Status:</strong> personal managed built-in under active testing. It is not yet a public Cobalt Store app.</div>
+  <figure>
+    <img src="screenshots/kobo-reading-device.png" alt="Zotero Reader showing a full-text paper on a Kobo">
+    <figcaption>Owner-provided development capture of the reading view; it is not a compatibility or release claim.</figcaption>
+  </figure>
+  <section class="cards" aria-label="Reading modes">
+    <article class="card"><h2>Direct mode</h2><p>The Kobo reads collections, metadata, abstracts, and Zotero indexed text directly from Zotero API v3. No personal server is required.</p><p><a href="setup.html">Set up direct mode →</a></p></article>
+    <article class="card"><h2>Bridge mode</h2><p>An optional FastAPI and Docling service converts stored Zotero PDFs into structured HTML with tables, formulas, OCR, and figures.</p><p><a href="self-hosting.html">Deploy the bridge →</a></p></article>
+  </section>
+
+  <h2>What it does</h2>
+  <ul>
+    <li>Lists up to 100 Zotero collections and lets you switch between them from the feed.</li>
+    <li>Keeps a separate cached snapshot for each selected collection and displays the newest 500 items.</li>
+    <li>Searches cached titles, authors, and tags on the reader.</li>
+    <li>Keeps up to 96 explicitly selected text documents offline, with position and annotations.</li>
+    <li>Never writes to Zotero and never scrapes Google Scholar or follows publisher links.</li>
+  </ul>
+
+  <h2>Choose a path</h2>
+  <table>
+    <thead><tr><th>Need</th><th>Use</th><th>Trade-off</th></tr></thead>
+    <tbody>
+      <tr><td>Simple personal reading</td><td>Direct mode</td><td>Indexed plain text has no original figures or layout.</td></tr>
+      <tr><td>Tables, formulas, OCR, figures</td><td>Conversion bridge</td><td>Requires an always-on Docker host and stores derived content temporarily.</td></tr>
+      <tr><td>Share with unrelated users</td><td>Not supported in v1</td><td>The bridge is single-user; public multi-tenant hosting needs a different authentication and isolation design.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Privacy boundary</h2>
+  <p>The direct Zotero key is stored by the Cobalt runtime and is available only to the exact read routes authorized for the runtime-verified <code>zotero-reader</code> app ID. The app never sees the secret value. The optional bridge uses a different token bound to one compiled HTTPS origin and its <code>/v1/</code> API. Credentialed redirects are refused.</p>
+</main>
+<footer>Development documentation. No account credentials or private library data are included in this site.</footer>
+</body>
+</html>

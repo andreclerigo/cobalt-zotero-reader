@@ -44,3 +44,9 @@ docker compose config
 
 For the app, follow docs/INTEGRATION.md and run the Cobalt host tests there.
 This repository alone is not a complete Cobalt workspace.
+
+For the static documentation, run:
+
+~~~
+python3 scripts/validate_docs.py
+~~~

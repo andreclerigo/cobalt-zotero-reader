@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Public HTTP contract for the optional Zotero Reader conversion bridge.">
+  <title>Bridge API · Zotero Reader</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <nav aria-label="Documentation"><a href="index.html">Overview</a><a href="setup.html">Set up</a><a href="self-hosting.html">Self-host</a><a aria-current="page" href="api.html">Bridge API</a><a href="troubleshooting.html">Troubleshoot</a><a href="https://github.com/andreclerigo/cobalt-zotero-reader">Source</a></nav>
+  <h1>Bridge API</h1>
+  <p class="lede">The versioned HTTP contract used by the Kobo. It is read-only with respect to Zotero; POST starts derived conversion work only.</p>
+</header>
+<main>
+  <h2>Authentication</h2>
+  <p><code>GET /v1/health</code> is public. Every other route requires <code>Authorization: Bearer &lt;bridge token&gt;</code>. Do not place the token in a query string. Keys in paths are bounded alphanumeric identifiers and every item route revalidates membership in at least one allowlisted collection.</p>
+
+  <h2>Routes</h2>
+  <table>
+    <thead><tr><th>Method and path</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>GET /v1/health</code></td><td>Process health. Returns <code>{"status":"ok"}</code>.</td></tr>
+      <tr><td><code>GET /v1/collections</code></td><td>Collections in the deployment allowlist.</td></tr>
+      <tr><td><code>GET /v1/collections/{key}/snapshot?limit=500</code></td><td>Bounded newest-first item summaries for one allowed collection.</td></tr>
+      <tr><td><code>GET /v1/items/{key}</code></td><td>Normalized metadata and stored-PDF availability.</td></tr>
+      <tr><td><code>POST /v1/items/{key}/conversion</code></td><td>Start or coalesce conversion of the stored PDF.</td></tr>
+      <tr><td><code>GET /v1/items/{key}/conversion</code></td><td>Read current conversion state.</td></tr>
+      <tr><td><code>GET /v1/items/{key}/document</code></td><td>Read sanitized, bounded HTML after conversion is ready.</td></tr>
+      <tr><td><code>GET /v1/items/{key}/figures/{name}</code></td><td>Read one derived PNG or JPEG referenced by the document.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Conversion states</h2>
+  <ul>
+    <li><code>missing_pdf</code> — no stored PDF is available.</li>
+    <li><code>queued</code> — accepted by the bounded local queue.</li>
+    <li><code>running</code> — Docling conversion is active.</li>
+    <li><code>ready</code> — document HTML is available.</li>
+    <li><code>failed</code> — conversion ended with a safe user-facing message.</li>
+  </ul>
+
+  <h2>Content limits</h2>
+  <ul>
+    <li>Snapshots are capped at 500 summaries.</li>
+    <li>Normalized HTML is capped at 768 KiB and truncates only between blocks with an explicit notice.</li>
+    <li>At most 64 referenced figures are published; each must fit Cobalt's 4 MiB picture limit.</li>
+    <li>The service downloads only a stored Zotero attachment and uploads PDF bytes—not a URL—to Docling.</li>
+  </ul>
+
+  <h2>Operational behavior</h2>
+  <p>The bridge honors Zotero pagination and backoff headers, limits Zotero and conversion concurrency, coalesces duplicate jobs, publishes cache entries atomically, and deletes job-scoped source PDFs after success, failure, timeout, or restart recovery. Persistent state contains derived HTML and figures only.</p>
+</main>
+<footer>New routes or broader credential use require matching Cobalt policy and negative-test updates.</footer>
+</body>
+</html>

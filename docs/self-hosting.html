@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Self-host the optional Zotero Reader Docling conversion bridge.">
+  <title>Self-host · Zotero Reader</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <nav aria-label="Documentation"><a href="index.html">Overview</a><a href="setup.html">Set up</a><a aria-current="page" href="self-hosting.html">Self-host</a><a href="api.html">Bridge API</a><a href="troubleshooting.html">Troubleshoot</a><a href="https://github.com/andreclerigo/cobalt-zotero-reader">Source</a></nav>
+  <h1>Self-host the bridge</h1>
+  <p class="lede">A single-user Docker Compose deployment for richer conversion of PDFs already stored in Zotero.</p>
+</header>
+<main>
+  <div class="note"><strong>Not GitHub Pages:</strong> Pages hosts this documentation, but cannot run FastAPI, Docling, background jobs, persistent cache, or secrets.</div>
+
+  <h2>Host requirements</h2>
+  <ul>
+    <li>A 64-bit Linux host with Docker Engine and Compose, persistent storage, public DNS, and inbound HTTPS.</li>
+    <li>A dedicated read-only Zotero key, numeric user ID, and at least one allowed collection key.</li>
+    <li>An encrypted cache volume owned by uid/gid <code>10001:10001</code> with mode <code>0700</code>.</li>
+    <li>Enough memory for Docling. A Raspberry Pi 5 with 8 GiB and SSD is a practical low-volume baseline; a VPS is usually simpler.</li>
+  </ul>
+
+  <h2>Configure</h2>
+  <pre><code>cd services/zotero-conversion-bridge
+cp .env.example .env
+chmod 600 .env
+openssl rand -hex 32  # bridge token
+openssl rand -hex 32  # separate Docling token</code></pre>
+  <p>Fill every blank field. <code>ALLOWED_COLLECTION_KEYS</code> accepts comma-separated collection keys, so one deployment can expose several collections from the same user library. Use the same Docling token for <code>DOCLING_API_KEY</code> and <code>DOCLING_SERVE_API_KEY</code>.</p>
+
+  <h2>Validate and start</h2>
+  <pre><code>docker compose config
+docker compose up --build -d
+docker compose ps
+curl --fail https://papers.example.com/v1/health</code></pre>
+  <p>Replace <code>papers.example.com</code> with the exact host written in <code>.env</code>.</p>
+  <p>Only Caddy publishes ports. The bridge and Docling networks are internal, and Docling is not directly reachable from the internet. The first real conversion is slower because Docling loads its models lazily.</p>
+
+  <h2>Bind a Cobalt build to the service</h2>
+  <pre><code>ZOTERO_READER_BRIDGE_ORIGIN=https://papers.example.com \
+  cargo run -p kobo-cli -- package
+cargo run -p kobo-cli -- secret set zotero-bridge --device &lt;address&gt;</code></pre>
+  <p>The origin must be bare HTTPS with no path, user-info, alternate port, or trailing slash. The device token is separate from the Zotero key.</p>
+
+  <h2>Deployment acceptance check</h2>
+  <ol>
+    <li>Confirm an unauthenticated API request is rejected and Docling has no public port.</li>
+    <li>Using an allowlisted real item with a stored PDF, start one conversion and poll until ready.</li>
+    <li>Open the HTML document and at least one figure on the Kobo.</li>
+    <li>Restart Compose and confirm the cached document remains readable.</li>
+    <li>Revoke test tokens after staging if they are not the intended production credentials.</li>
+  </ol>
+
+  <h2>State, backup, and rollback</h2>
+  <p>Source PDFs are temporary and deleted after conversion. Derived HTML and figures are cached for 30 days after last access under a 10 GiB quota. Preserve Caddy's volume during ordinary redeployments; the derived and Docling model caches are reproducible. Roll back by revoking both tokens, stopping Compose, purging derived cache if needed, and deploying the previous Cobalt package. Zotero needs no data restore because the integration is read-only.</p>
+
+  <h2>Who should not share this instance?</h2>
+  <p>This bridge has one Zotero identity, one bearer token, one allowlist, and one cache namespace. It is suitable for one owner or a trusted household. A public community service needs per-user authentication, isolated credentials and cache, quotas, abuse controls, and shared job coordination; v1 deliberately does not claim those properties.</p>
+</main>
+<footer>Operational details and exact environment variables remain in the bridge README in the source repository.</footer>
+</body>
+</html>

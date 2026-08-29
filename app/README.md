@@ -4,6 +4,10 @@ Zotero Reader is a read-only Cobalt app for browsing a Zotero collection and
 reading paper text on a Kobo. Google Scholar can remain an input through the
 Zotero Connector; the app never accesses or scrapes Scholar.
 
+Start with the [setup guide](../docs/setup.html), or read the
+[project documentation](../docs/index.html) for the two reading modes,
+privacy boundaries, self-hosting, and troubleshooting.
+
 ## Serverless core
 
 The default build connects directly to `https://api.zotero.org` using Zotero
@@ -18,10 +22,11 @@ or a shell argument:
 kobo secret set zotero --device <address>
 ```
 
-Enter the numeric user ID on first launch, then choose a collection. Direct
-mode retains text, position, and annotations offline. Zotero's full-text API is
-plain text, so figures, tables, formulas, OCR, and original PDF layout are not
-preserved in this mode.
+Enter the numeric user ID on first launch, then choose a collection. Use the
+**Collections** folder in the feed header to switch later; each collection has
+its own cached list. Direct mode retains text, position, and annotations
+offline. Zotero's full-text API is plain text, so figures, tables, formulas,
+OCR, and original PDF layout are not preserved in this mode.
 
 ## Optional conversion bridge
 
@@ -54,3 +59,6 @@ cargo run -p kobo-cli -- run --sim --app zotero-reader
 
 The committed Zotero responses under `fixtures/` are synthetic and contain no
 account data or credentials.
+
+For the complete deployment checklist, see
+[Self-host the conversion bridge](../docs/self-hosting.html).

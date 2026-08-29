@@ -1,0 +1,56 @@
+:root {
+  color-scheme: light dark;
+  --paper: #f7f2e8;
+  --ink: #24221e;
+  --muted: #625d52;
+  --line: #d7cdbb;
+  --accent: #7b3328;
+  --panel: #fffaf0;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1.62;
+}
+
+header, main, footer {
+  width: min(920px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+header { padding: 2.4rem 0 1rem; }
+main { padding-bottom: 3rem; }
+footer { border-top: 1px solid var(--line); padding: 1.4rem 0 2.5rem; color: var(--muted); }
+
+nav { display: flex; flex-wrap: wrap; gap: .5rem 1.2rem; font-family: ui-sans-serif, system-ui, sans-serif; font-size: .9rem; }
+nav a[aria-current="page"] { font-weight: 700; text-decoration-thickness: 3px; }
+
+h1, h2, h3 { line-height: 1.15; letter-spacing: -.02em; }
+h1 { font-size: clamp(2.4rem, 8vw, 4.6rem); margin: 1.5rem 0 .4rem; }
+h2 { margin-top: 2.6rem; }
+
+a { color: var(--accent); }
+code, pre { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .88em; }
+pre { overflow-x: auto; padding: 1rem; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+figure { margin: 1.8rem 0; }
+figure img { display: block; width: min(100%, 700px); height: auto; border: 1px solid var(--line); border-radius: 8px; }
+figcaption { margin-top: .5rem; color: var(--muted); font-size: .9rem; }
+
+.lede { color: var(--muted); font-size: 1.25rem; max-width: 48rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.card, .note { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 1rem 1.15rem; }
+.card h2, .card h3 { margin-top: .2rem; }
+.note { border-left: 5px solid var(--accent); }
+table { width: 100%; border-collapse: collapse; }
+th, td { border-bottom: 1px solid var(--line); padding: .65rem; text-align: left; vertical-align: top; }
+th { font-family: ui-sans-serif, system-ui, sans-serif; font-size: .85rem; }
+
+@media (prefers-color-scheme: dark) {
+  :root { --paper: #211f1b; --ink: #f4eee2; --muted: #c7bcaa; --line: #514a40; --accent: #f0a193; --panel: #2a2722; }
+}

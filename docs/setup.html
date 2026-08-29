@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Set up Zotero Reader direct mode on a Cobalt Kobo.">
+  <title>Set up · Zotero Reader</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <nav aria-label="Documentation"><a href="index.html">Overview</a><a aria-current="page" href="setup.html">Set up</a><a href="self-hosting.html">Self-host</a><a href="api.html">Bridge API</a><a href="troubleshooting.html">Troubleshoot</a><a href="https://github.com/andreclerigo/cobalt-zotero-reader">Source</a></nav>
+  <h1>Set up direct mode</h1>
+  <p class="lede">Start here. A Zotero account and a compatible Cobalt development package are enough; the conversion bridge is optional.</p>
+</header>
+<main>
+  <h2>1. Prepare Zotero</h2>
+  <ol>
+    <li>Create one or more Zotero collections and add papers to them. A stored PDF is needed for full text.</li>
+    <li>Create a dedicated Zotero API key with read-only library and file access.</li>
+    <li>Record the numeric user ID shown on the key page. It is not your username.</li>
+  </ol>
+  <div class="note">Do not put the API key in Git, a URL, a build flag, or a screenshot.</div>
+
+  <h2>2. Install the secret</h2>
+  <p>From the Cobalt repository, run the interactive secret command:</p>
+  <pre><code>cargo run -p kobo-cli -- secret set zotero --device &lt;address&gt;</code></pre>
+  <p>The command prompts for the value without placing it in shell history. Install or deploy the local package using the normal Cobalt development workflow for your supported device.</p>
+
+  <h2>3. Launch Zotero Reader</h2>
+  <ol>
+    <li>Enter the numeric user ID.</li>
+    <li>If Zotero returns one collection, it opens automatically. If it returns several, choose one.</li>
+    <li>Use <strong>Collections</strong> in the feed header whenever you want to switch. Use <strong>Offline</strong> to open kept papers.</li>
+  </ol>
+  <p>The app remembers the selected collection and stores a separate bounded snapshot for each collection you open. Refresh and search apply to the collection named at the top of the screen.</p>
+
+  <h2>4. Read a paper</h2>
+  <p>Open an item to see its metadata and abstract. In direct mode, <strong>Open Zotero indexed text</strong> asks Zotero for the stored attachment's plain-text index. A linked file or publisher URL is not downloaded. Position and annotations are saved as private Cobalt shelf data.</p>
+
+  <h2>Limits in direct mode</h2>
+  <ul>
+    <li>The collections request is bounded to the first 100 collections sorted by title.</li>
+    <li>Each collection snapshot contains at most the newest 500 top-level items.</li>
+    <li>Zotero indexed text does not preserve figures, tables, formulas, OCR layout, or PDF pagination.</li>
+    <li>Figures require the optional bridge and remain online-only in v1.</li>
+  </ul>
+</main>
+<footer><a href="troubleshooting.html">Something did not work? Open the troubleshooting guide.</a></footer>
+</body>
+</html>

@@ -10,6 +10,10 @@ or follows publisher URLs. It is useful for readers who want headings, tables,
 formulas, OCR, and figures and have access to an owner- or community-hosted
 instance.
 
+For a guided deployment, start with the GitHub Pages-ready
+[self-hosting guide](../../docs/self-hosting.html). This README remains the
+service's concise operational reference.
+
 ## Hosting model
 
 This is a single-host, stateful-cache service, not a static site or a
@@ -76,8 +80,10 @@ derived-version namespace; purge the persistent cache when changing users.
 docker compose config
 docker compose up --build -d
 docker compose ps
-curl "https://${ZOTERO_READER_HOST}/v1/health"
+curl --fail https://papers.example.com/v1/health
 ```
+
+Replace `papers.example.com` with the exact host written in `.env`.
 
 If a non-default environment file is used, pass it to Compose as well as naming
 it for the bridge, so interpolation values such as the Docling key and resource
