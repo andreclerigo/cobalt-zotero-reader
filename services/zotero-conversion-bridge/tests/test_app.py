@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import gzip
 from pathlib import Path
+from unittest.mock import AsyncMock
 
 import httpx
 import pytest
@@ -11,6 +12,8 @@ from pydantic import SecretStr, ValidationError
 
 from papers_bridge.app import create_app
 from papers_bridge.config import Settings
+from papers_bridge.conversion import document_version
+from papers_bridge.models import CacheMetadata, ItemDetail
 
 
 def test_settings_accept_comma_separated_collection_keys_from_environment(
@@ -82,6 +85,51 @@ def test_public_item_contract_is_item_qualified(settings: Settings) -> None:
     assert "/v1/items/{item_key}" in paths
     assert "/v1/items/{item_key}/conversion" in paths
     assert not any("{collection_key}/items" in path for path in paths)
+
+
+def test_document_prevents_intermediary_html_transformation(settings: Settings) -> None:
+    app = create_app(settings)
+    detail = ItemDetail(
+        key="ITEM1",
+        version=3,
+        title="Synthetic paper",
+        creator_summary="A. Researcher",
+        year="2026",
+        date_added="2026-08-29T00:00:00Z",
+        tags=[],
+        has_stored_pdf=True,
+        authors=["A. Researcher"],
+        abstract="",
+        venue="",
+        doi="",
+        url="",
+        pdf_attachment_key="ATTACH1",
+        pdf_attachment_version=7,
+    )
+    version = document_version(
+        "ATTACH1", 7, settings.cache_configuration_fingerprint
+    )
+    metadata = CacheMetadata(
+        item_key="ITEM1",
+        attachment_key="ATTACH1",
+        attachment_version=7,
+        document_version=version,
+        truncated=False,
+        figures=[],
+        bytes=0,
+    )
+    body = b"<p>author@example.test</p>"
+    with TestClient(app) as client:
+        app.state.resources.zotero.detail = AsyncMock(return_value=detail)
+        app.state.resources.cache.publish(metadata, body, {})
+        response = client.get(
+            "/v1/items/ITEM1/document",
+            headers={"Authorization": f"Bearer {'b' * 32}"},
+        )
+
+    assert response.status_code == 200
+    assert response.content == body
+    assert response.headers["Cache-Control"] == "no-transform"
 
 
 def test_blank_or_short_secrets_fail_before_the_service_starts() -> None:

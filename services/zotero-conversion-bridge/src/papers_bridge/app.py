@@ -138,7 +138,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         body = state.conversions.document(item_key, expected) if expected else None
         if body is None:
             raise HTTPException(status_code=404, detail="converted document not found")
-        return Response(content=body, media_type="text/html; charset=utf-8")
+        return Response(
+            content=body,
+            media_type="text/html; charset=utf-8",
+            headers={"Cache-Control": "no-transform"},
+        )
 
     @app.get(
         "/v1/items/{item_key}/figures/{name}",

@@ -73,6 +73,9 @@ Zotero and internal Docling origins are fixed and validated at startup. Item
 authorization is cached for five minutes to keep polling and figure loading
 within Zotero's request budget. A user or allowlist change invalidates the
 derived-version namespace; purge the persistent cache when changing users.
+Document responses send `Cache-Control: no-transform` so HTTPS intermediaries
+such as Cloudflare cannot inject browser-only email-obfuscation scripts into
+the sanitized HTML consumed by the Kobo.
 
 ## Run
 

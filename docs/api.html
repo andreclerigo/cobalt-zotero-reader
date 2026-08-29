@@ -50,7 +50,7 @@
   </ul>
 
   <h2>Operational behavior</h2>
-  <p>The bridge honors Zotero pagination and backoff headers, limits Zotero and conversion concurrency, coalesces duplicate jobs, publishes cache entries atomically, and deletes job-scoped source PDFs after success, failure, timeout, or restart recovery. Persistent state contains derived HTML and figures only.</p>
+  <p>The bridge honors Zotero pagination and backoff headers, limits Zotero and conversion concurrency, coalesces duplicate jobs, publishes cache entries atomically, and deletes job-scoped source PDFs after success, failure, timeout, or restart recovery. Persistent state contains derived HTML and figures only. Document responses include <code>Cache-Control: no-transform</code> so proxies cannot inject browser-only scripts into sanitized reader HTML.</p>
 </main>
 <footer>New routes or broader credential use require matching Cobalt policy and negative-test updates.</footer>
 </body>
